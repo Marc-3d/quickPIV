@@ -36,7 +36,7 @@ The most meaningful parameters to change are the interrogation size (interSize),
 
 ### Visualizing the results
 
-To visualize 3D volumes and 3D vector fields I have been using Paraview. For this reason, I have added functions to write these into VTK files. 
+To visualize 3D volumes and 3D vector fields I have been using Paraview. For this reason, I have added functions to write these into VTK files.
 ```Julia
 vectorFieldToVTK( "filename", U, V, W, path="/path/to/your/results/" )
 volumeToVTK( "filename", volume1, path="/path/to/your/liking/" )
@@ -49,7 +49,7 @@ The evaluation code is included in the Evaluation branch.
 1-. Clone the evaluation branch in your computer:
 
 ```
-git clone -b Evaluation https://github.com/Marc-3d/PIV3D.git
+git clone -b Evaluation https://github.com/Marc-3d/quickPIV.git
 ```
 
 2-. Open a Julia terminal and install IJulia:
