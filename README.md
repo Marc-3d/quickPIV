@@ -70,4 +70,4 @@ NOTE: After running "using IJulia" for the first time, you will be asked whether
 IJulia.notebook()
 ```
 
-4-. A tab will open in your default web browser. Make your way in the jupyter tree to the PIV3D folder that was downloaded in step 1. The "EvaluationNotebooks"  folder contains the Julia evaluation notebook, python performance evaluation notebook and .cpp performance script.
+4-. A tab will open in your default web browser. Make your way in the jupyter tree to the quickPIV folder that was downloaded in step 1. The "EvaluationNotebooks"  folder contains the Julia evaluation notebook, python performance evaluation notebook and .cpp performance script.
