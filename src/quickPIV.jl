@@ -87,4 +87,9 @@ function _PIV( vol1::A{T,3}, vol2::A{T,3}, p::PIVParameters; units=nothing
 	return u, v, w, sn;
 end
 
+using DataFrames, Gadfly, Compose, Distributions
+
+include("EvaluationOnSyntheticData/transformations.jl")
+include("EvaluationOnSyntheticData/evaluation.jl")
+
 end

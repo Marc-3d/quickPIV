@@ -1,0 +1,16 @@
+If you can't run the compiled cpp script, "openPIV_cpp_performance.o" you will have
+to compile the script yourself. 
+
+In Ubuntu, this is done by typing "./openPIV_cpp_performance" in a terminal in the
+current directory.
+
+Compiling the cpp code requires that the FFTW library is installed in your system. 
+If FFTW is installed, this command should work for compiling the cpp script:
+
+g++ openPIV_cpp_script.cpp -lfftw3
+
+If you have installed the FFTW library but you still get a linker problem, you might
+need to find and provide the path to the library file. In my case, this would look 
+like this: 
+
+g++ openPIV_cpp_script.ccp -L /usr/lib/x86_64-linux-gnu/ -lfftw3 
