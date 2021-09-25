@@ -1,0 +1,12 @@
+name = "quickPIV"
+uuid = "a7ef0d03-9b98-4a48-9d47-a853b7b40ca8"
+authors = ["MarcP <marcpm1994@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
+FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
+LIBTIFF = "70b51d67-c487-4396-b38c-3fc6acfb5994"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Measures = "442fdcdd-2543-5da2-b0f3-8c86c306513e"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
