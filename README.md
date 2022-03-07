@@ -71,3 +71,9 @@ IJulia.notebook()
 ```
 
 4-. A tab will open in your default web browser. Make your way in the jupyter tree to the quickPIV folder that was downloaded in step 1. The "EvaluationNotebooks"  folder contains the Julia evaluation notebook, python performance evaluation notebook and .cpp performance script.
+
+## Citing quickPIV
+
+If you find this package useful for your own research, you can cite quickPIV as:
+
+Pereyra, M., Drusko, A., Krämer, F. et al. QuickPIV: Efficient 3D particle image velocimetry software applied to quantifying cellular migration during embryogenesis. BMC Bioinformatics 22, 579 (2021). https://doi.org/10.1186/s12859-021-04474-0
