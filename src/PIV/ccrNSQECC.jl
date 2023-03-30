@@ -275,10 +275,10 @@ function PIV_3D( ::NSQECC, vol1::A{<:Real,3}, vol2::A{<:Real,3},
     return U, V, W, SN, df
 end
 
-function PIV_3D( ::NSQECC, vol1::A{<:Real,3}, vol2::A{<:Real,3}, mask::A{Bool,1},
-                         IA::III, SM::III, overlap::III, mpass::I, width::I, 
-						 peak::S, sigNoise::S, filtFun::Function, threshold::F ;
-                         corrType=Float32, vfType=Float32 ) 
+function PIV_3D( ::NSQECC, vol1::A{<:Real,3}, vol2::A{<:Real,3}, mask::A{Bool,3},
+                           IA::III, SM::III, overlap::III, mpass::I, width::I, 
+						   peak::S, sigNoise::S, filtFun::Function, threshold::F ;
+                           corrType=Float32, vfType=Float32 ) 
     
 	# Calculating size of the vector field
     step   = IA .- overlap; 
@@ -323,7 +323,8 @@ function PIV_3D( ::NSQECC, vol1::A{<:Real,3}, vol2::A{<:Real,3}, mask::A{Bool,1}
 			for x2 in IAranges[2];     x1 = x2-IA_mp[2]+1; vfx .+= mp; vfy = [ 1-mp, 0 ];
 				for y2 in IAranges[1]; y1 = y2-IA_mp[1]+1; vfy .+= mp;
 					
-					if !mask[cont] # Filtering of undesirable IAs, ex background
+					IA_center = ( y1 + div(IA_mp[1],2), x1 + div(IA_mp[2],2), z1 + div( IA_mp[3],2 ) ) 
+					if !mask[IA_center] # Filtering of undesirable IAs, ex background
 						SN[ vfy[1]:vfy[2], vfx[1]:vfx[2], vfz[1]:vfz[2] ] .= -1.0
 						cont += 1; 
 						continue; 
