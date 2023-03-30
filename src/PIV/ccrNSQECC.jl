@@ -324,7 +324,7 @@ function PIV_3D( ::NSQECC, vol1::A{<:Real,3}, vol2::A{<:Real,3}, mask::A{Bool,3}
 				for y2 in IAranges[1]; y1 = y2-IA_mp[1]+1; vfy .+= mp;
 					
 					IA_center = ( y1 + div(IA_mp[1],2), x1 + div(IA_mp[2],2), z1 + div( IA_mp[3],2 ) ) 
-					if !mask[IA_center] # Filtering of undesirable IAs, ex background
+					if !mask[IA_center...] # Filtering of undesirable IAs, ex background
 						SN[ vfy[1]:vfy[2], vfx[1]:vfx[2], vfz[1]:vfz[2] ] .= -1.0
 						cont += 1; 
 						continue; 
