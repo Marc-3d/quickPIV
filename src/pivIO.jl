@@ -19,7 +19,7 @@ end
 
 """ Loads 3D tiff stacks, 3D vtk volumes and any file openable with FileIO.load() """
 
-function PIVload( filename::String; typ=nothing, sample=1, path=pwd() )
+function PIVload( filename::String; typ=nothing, sample=(1,1,1), path=pwd() )
 
     fn = parseFilename( filename, path, "" )
     isfile(fn) || error("$fn can not be found")
