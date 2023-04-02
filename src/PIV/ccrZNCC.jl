@@ -188,6 +188,8 @@ function PIV_3D( ::ZNCC, vol1::A{T,3}, vol2::A{T,3},
 	df = zeros( vfType, vfSize ); 
 
 	ignoreSN = sigNoise == ""; 
+
+	p = ProgressMeter.Progress(n, dt=1.0)
     
     @inbounds for mp in mpass:-1:1
         last_mp = ( mp == 1 ); 
@@ -217,6 +219,8 @@ function PIV_3D( ::ZNCC, vol1::A{T,3}, vol2::A{T,3},
 		for z2 in IAranges[3];         z1 = z2-IA_mp[3]+1; vfz .+= mp; vfx = [ 1-mp, 0 ];
 			for x2 in IAranges[2];     x1 = x2-IA_mp[2]+1; vfx .+= mp; vfy = [ 1-mp, 0 ];
 				for y2 in IAranges[1]; y1 = y2-IA_mp[1]+1; vfy .+= mp;
+
+					ProgressMeter.next!( p )
 
 					# 0-. Filtering undesirable IAs, ex background
 					interr = view( vol1, y1:y2, x1:x2, z1:z2 )

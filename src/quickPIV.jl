@@ -1,6 +1,6 @@
 module quickPIV
 
-using FFTW, FileIO, LIBTIFF, Statistics
+using FFTW, FileIO, LIBTIFF, Statistics, ProgressMeter
 
 export PIV
 

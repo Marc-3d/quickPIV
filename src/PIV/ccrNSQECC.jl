@@ -210,11 +210,16 @@ function PIV_3D( ::NSQECC, vol1::A{<:Real,3}, vol2::A{<:Real,3},
         ssize   = IA_mp .+ 2 .* SM_mp
         intArr2 = zeros( corrType, ssize .+ 1 ); 
 
+		n = length( IAranges[3] ) * length( IAranges[2] ) * length( IAranges[1] )
+		p = ProgressMeter.Progress(n, "Computing PIV...")
+
 		# Nested loop establishing IV and UVW coordinates
 		vfz = [ 1-mp, 0 ]
 		for z2 in IAranges[3];         z1 = z2-IA_mp[3]+1; vfz .+= mp; vfx = [ 1-mp, 0 ];
 			for x2 in IAranges[2];     x1 = x2-IA_mp[2]+1; vfx .+= mp; vfy = [ 1-mp, 0 ];
 				for y2 in IAranges[1]; y1 = y2-IA_mp[1]+1; vfy .+= mp;
+
+					ProgressMeter.next!( p )
 				
 					interr = view( vol1, y1:y2, x1:x2, z1:z2 )
 					
