@@ -425,7 +425,7 @@ function similarityAveraging3D( avg_radius::I, U::Array{T,3}, V::Array{T,3}, W::
                 if norm
                     mmag = sqrt( mean_u*mean_u + mean_v*mean_v + mean_w*mean_w );
                 else
-                    mmag = 1
+                    mmag = n
                 end
 
                 u_avg[ row, col, zet ] = mean_u/mmag * sim;
