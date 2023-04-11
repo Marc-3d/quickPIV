@@ -359,7 +359,7 @@ end
 
 """ Spatial averaging + similarity thresholding combo """
 function similarityAveraging3D( avg_radius::I, U::Array{T,3}, V::Array{T,3}, W::Array{T,3};
-                                norm=true, sim=true, st=0.0 ) where {T<:AbstractFloat}
+                                norm=true, scalesim=true, st=0.0 ) where {T<:AbstractFloat}
 
     u_avg   = zeros( T, size(U) );
     v_avg   = zeros( T, size(V) );
@@ -427,7 +427,7 @@ function similarityAveraging3D( avg_radius::I, U::Array{T,3}, V::Array{T,3}, W::
                 else
                     mmag = n
                 end
-                if !sim
+                if !scalesim
                     sim = 1
                 end
 
