@@ -188,8 +188,6 @@ function PIV_3D( ::ZNCC, vol1::A{T,3}, vol2::A{T,3},
 	df = zeros( vfType, vfSize ); 
 
 	ignoreSN = sigNoise == ""; 
-
-	p = ProgressMeter.Progress(n, dt=1.0)
     
     @inbounds for mp in mpass:-1:1
         last_mp = ( mp == 1 ); 
@@ -213,6 +211,9 @@ function PIV_3D( ::ZNCC, vol1::A{T,3}, vol2::A{T,3},
         padi    = zeros( Complex{corrType}, csize ); 
         plan    =  FFTW.plan_fft!( pads ); 
         iplan   = FFTW.plan_ifft!( pads );
+
+		n = length( IAranges[3] ) * length( IAranges[2] ) * length( IAranges[1] )
+		p = ProgressMeter.Progress(n, dt=1.0)
 
 		# Nested loop establishing IV and UVW coordinates
 		vfz = [ 1-mp, 0 ]
