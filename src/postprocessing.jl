@@ -519,7 +519,7 @@ function sink( rad::I, pos::III )
     return [ [ (pos[1]-y )/sqrt( (pos[1]-y)^2 + (pos[2]-x)^2 + (pos[3]-z)^2 ),
                (pos[2]-x )/sqrt( (pos[1]-y)^2 + (pos[2]-x)^2 + (pos[3]-z)^2 ),
                (pos[3]-z )/sqrt( (pos[1]-y)^2 + (pos[2]-x)^2 + (pos[3]-z)^2 ) ] for
-	       y in pos[1]-rad:pos[1]+rad, x in pos[2]-rad:pos[2]+rad, z in pos[3]-rda:pos[3]+rad ]
+	       y in pos[1]-rad:pos[1]+rad, x in pos[2]-rad:pos[2]+rad, z in pos[3]-rad:pos[3]+rad ]
 end
 
 function crossCorrelateSink!( u, v, w, sink, corr )
