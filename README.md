@@ -23,11 +23,11 @@ After installing the package, running a PIV analysis takes three steps.
 using quickPIV
 
 # Thus far I have worked with volumes stored as .tiff files. I have modified LIBTIFF to read 3D scanline volumes.
-volume1 = quickPIV.PIVload( "filename1.tiff", typ=Float32, path="/path/to/data/" )
-volume2 = quickPIV.PIVload( "filename2.tiff", typ=Float32, path="/path/to/data/" )
+volume1 = quickPIV.PIVload( "filename1.tif", typ=Float32, path="/path/to/data/" )
+volume2 = quickPIV.PIVload( "filename2.tif", typ=Float32, path="/path/to/data/" )
 
 # interSize, overlap and searchMargin can be given different values for each dimension, ex interSize=(10,30,20), overlap=(5,5,8)...
-params = quickPIV.setPIVParameters( interSize=32, overlap=10, searchMargin=5, corr="ZNCC", mpass=2 );
+params = quickPIV.setPIVParameters( interSize=32, overlap=10, searchMargin=12, corr="nsqecc" );
 
 U, V, W, SN = quickPIV.PIV( volume1, volume2, params );
 ```
