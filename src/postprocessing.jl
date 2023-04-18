@@ -359,7 +359,7 @@ end
 
 """ Spatial averaging + similarity thresholding combo """
 function similarityAveraging3D( avg_radius::I, U::Array{T,3}, V::Array{T,3}, W::Array{T,3};
-                                norm=true, st=0.0 ) where {T<:AbstractFloat}
+                                norm=true, scalesim=true, st=0.0 ) where {T<:AbstractFloat}
 
     u_avg   = zeros( T, size(U) );
     v_avg   = zeros( T, size(V) );
@@ -426,6 +426,9 @@ function similarityAveraging3D( avg_radius::I, U::Array{T,3}, V::Array{T,3}, W::
                     mmag = sqrt( mean_u*mean_u + mean_v*mean_v + mean_w*mean_w );
                 else
                     mmag = n
+                end
+                if !scalesim
+                    sim = 1
                 end
 
                 u_avg[ row, col, zet ] = mean_u/mmag * sim;
@@ -516,7 +519,7 @@ function sink( rad::I, pos::III )
     return [ [ (pos[1]-y )/sqrt( (pos[1]-y)^2 + (pos[2]-x)^2 + (pos[3]-z)^2 ),
                (pos[2]-x )/sqrt( (pos[1]-y)^2 + (pos[2]-x)^2 + (pos[3]-z)^2 ),
                (pos[3]-z )/sqrt( (pos[1]-y)^2 + (pos[2]-x)^2 + (pos[3]-z)^2 ) ] for
-	       y in pos[1]-rad:pos[1]+rad, x in pos[2]-rad:pos[2]+rad, z in pos[3]-rda:pos[3]+rad ]
+	       y in pos[1]-rad:pos[1]+rad, x in pos[2]-rad:pos[2]+rad, z in pos[3]-rad:pos[3]+rad ]
 end
 
 function crossCorrelateSink!( u, v, w, sink, corr )
