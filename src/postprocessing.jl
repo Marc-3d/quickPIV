@@ -78,6 +78,36 @@ end
 
 
 """
+    Replaces vectors whose SN is < th * std. The replacement function can be
+    specified, as well as the radius of the neighbouring vectors that are used to
+    compute median and mean vectors.
+
+    Implemented replacement functions are.
+        PIV3D.zeroReplace ----> replaces outlier vectors by a vector of zeros
+        PIV3D.medianReplace --> replaces outlider vector by the median vector
+        PIV3D.meanReplace ----> replaces outlier vectors by the mean vector
+"""
+function SNFilter( SN::Array{<:Real,N}, th, arrays::Array{T,N}...; 
+				    replace::Function=zeroReplace, radius=0 ) where {T,N}
+
+    filtered = [ copy( arrays[idx] ) for idx in 1:length(arrays) ];
+
+    mask   = Bool.( SN .< th );
+    coords = CartesianIndices( mask );
+
+    for e in 1:length(mask)
+        if mask[e]
+            replacement = replace( Tuple(coords[e]), radius, arrays... )
+            for c in 1:length(arrays)
+                filtered[c][e] = replacement[c]
+            end
+        end
+    end
+
+    return filtered
+end
+
+"""
     Replaces vectors whose magnitude is > n * std. The replacement function can be
     specified, as well as the radius of the neighbouring vectors that are used to
     compute median and mean vectors.
@@ -357,9 +387,14 @@ function spaceTimeAveraging( avg_rs::I, avg_rt::I, u::Array{T,4}, v::Array{T,4},
     return u_avg, v_avg, w_avg
 end
 
-""" Spatial averaging + similarity thresholding combo """
 function similarityAveraging3D( avg_radius::I, U::Array{T,3}, V::Array{T,3}, W::Array{T,3};
-                                norm=true, scalesim=true, st=0.0 ) where {T<:AbstractFloat}
+    st=0.0 ) where {T<:AbstractFloat}
+    return similarityAveraging3D( (avg_radius,avg_radius,avg_radius), U, V, W, st=st )
+end
+
+""" Spatial averaging + similarity thresholding combo """
+function similarityAveraging3D( avg_radius::III, U::Array{T,3}, V::Array{T,3}, W::Array{T,3};
+                                st=0.0 ) where {T<:AbstractFloat}
 
     u_avg   = zeros( T, size(U) );
     v_avg   = zeros( T, size(V) );
@@ -367,12 +402,12 @@ function similarityAveraging3D( avg_radius::I, U::Array{T,3}, V::Array{T,3}, W::
     h, w, d = size( U )
 
     for zet in 1:d
-        zmin = max( 1, zet-avg_radius );
-        zmax = min( d, zet+avg_radius );
+        zmin = max( 1, zet-avg_radius[3] );
+        zmax = min( d, zet+avg_radius[3] );
 
         for col in 1:w
-            cmin = max( 1, col-avg_radius );
-            cmax = min( w, col+avg_radius );
+            cmin = max( 1, col-avg_radius[2] );
+            cmax = min( w, col+avg_radius[2] );
 
             for row in 1:h
 
@@ -388,8 +423,8 @@ function similarityAveraging3D( avg_radius::I, U::Array{T,3}, V::Array{T,3}, W::
                 nv1 = V[row,col,zet]/mag
                 nw1 = W[row,col,zet]/mag
 
-                rmin = max( 1, row-avg_radius );
-                rmax = min( h, row+avg_radius );
+                rmin = max( 1, row-avg_radius[1] );
+                rmax = min( h, row+avg_radius[1] );
 
                 len  = length(rmin:rmax)*length(cmin:cmax)*length(zmin:zmax);
 
@@ -421,21 +456,57 @@ function similarityAveraging3D( avg_radius::I, U::Array{T,3}, V::Array{T,3}, W::
                     end
                 end
 
-                sim = (n/len)^2;
-                if norm
-                    mmag = sqrt( mean_u*mean_u + mean_v*mean_v + mean_w*mean_w );
-                else
-                    mmag = n
-                end
-                if !scalesim
-                    sim = 1
-                end
+                sim  = (n/len)^2;
+                mmag = sqrt( mean_u*mean_u + mean_v*mean_v + mean_w*mean_w );
 
                 u_avg[ row, col, zet ] = mean_u/mmag * sim;
                 v_avg[ row, col, zet ] = mean_v/mmag * sim;
                 w_avg[ row, col, zet ] = mean_w/mmag * sim;
             end
         end
+    end
+
+    return u_avg, v_avg, w_avg
+end
+
+function similaritySpeedAveraging3D( avg_radius::I, U::Array{T,3}, V::Array{T,3}, W::Array{T,3};
+                                     st=0.0 ) where {T<:AbstractFloat}
+    u_avg   = zeros( T, size(U) );
+    v_avg   = zeros( T, size(V) );
+    w_avg   = zeros( T, size(W) );
+    h, w, d = size( U )
+
+    for zet in 1:d, col in 1:w, row in 1:h
+        zmin, zmax = max( 1, zet-avg_radius ), min( d, zet+avg_radius );
+        cmin, cmax = max( 1, col-avg_radius ), min( w, col+avg_radius );
+        rmin, rmax = max( 1, row-avg_radius ), min( h, row+avg_radius );
+        len = length(rmin:rmax)*length(cmin:cmax)*length(zmin:zmax);
+        # sampling each vector in the vector field
+        vec = U[row,col,zet], V[row,col,zet], W[row,col,zet]
+        mag = sqrt( sum( vec .* vec ) )
+        # normalizing the vector, if its magnitude is > 0
+        ( mag == 0 ) && ( continue; )
+        nvec = vec ./ mag; 
+        # variables to hold the averaged vector component
+        mean_u = 0.0;
+        mean_v = 0.0;
+        mean_w = 0.0;
+        # counter of similar neighbouring vectors
+        n  = 0;
+        for z in zmin:zmax, x in cmin:cmax, y in rmin:rmax
+            vec2 = ( U[y,x,z], V[y,x,z], W[y,x,z] )
+            mag2 = sqrt( sum( vec2 .* vec2 ) ); 
+            nvec2 = vec2 ./ mag2
+            if sum( vec .* vec2 ) > st
+                mean_u += U[y,x,z]
+                mean_v += V[y,x,z]
+                mean_w += W[y,x,z]
+                n += 1;
+            end
+        end
+        u_avg[ row, col, zet ] = mean_u/n;
+        v_avg[ row, col, zet ] = mean_v/n;
+        w_avg[ row, col, zet ] = mean_w/n;
     end
 
     return u_avg, v_avg, w_avg
@@ -579,83 +650,67 @@ end
 """ PIV Trajectories, work started by Michelle Gottlieb  """
 
 function PIVtrajectories( U::Array{P,4}, V::Array{P,4}, W::Array{P,4},
-                          T0, T1, numpoints; facF=1, 
-				          subr=( -1: -1, -1: -1, -1: -1 ) ) where {P<:Real}
-    return PIVtrajectories( U, V, W, T0, T1, numpoints, 1:size(U,1), 1:size(U,2), 1:size(U,3), subr=subr, facF=facF )
-end
-
-function PIVtrajectories( U::Array{P,4}, V::Array{P,4}, W::Array{P,4},
-                          T0, T1, numpoints, vrange, lrange, drange; 
-                          subr=( -1: -1, -1: -1, -1: -1 ), facF=1 ) where {P<:Real}
-
-    # Vertical, lateral and depth axes.
-    VV = collect( vrange );
-    LL = collect( lrange );
-    DD = collect( drange );
-
-    dims = ( length(VV), length(LL), length(DD) );
-
-    # I am still not sure of what these scaling factors do
-    endV = VV[ end ]
-    endH = LL[ end ]
-    endD = DD[ end ]
-    facV = 1 # endV/dims[1]
-    facL = 1 # endH/dims[2]
-    facD = 1 # endD/dims[3]
+                          T0, T1, numpoints; subregion=( 1:-1, 1:-1, 1:-1 ), scale=(1,1,1) ) where {P<:Real}
 
     numT = T1 - T0;
-    TrajectoriesV = zeros( Float32, numT, numpoints )
-    TrajectoriesL = zeros( Float32, numT, numpoints )
-    TrajectoriesD = zeros( Float32, numT, numpoints )
+    TrajectoriesY = zeros( Float32, numT, numpoints )
+    TrajectoriesX = zeros( Float32, numT, numpoints )
+    TrajectoriesZ = zeros( Float32, numT, numpoints )
 
+    # Length of the each axis of the vector field. 
+    dims  = ( length( 1:size(U,1) ), length( 1:size(U,2) ), length( 1:size(U,3) ) );
+
+    # The user can limit the simulation to a certain subregion of the vector field. 
+    sampling_region = [ length( subregion[i] ) == 0 ? (2:dims[i]-1) : subregion[i] for i in 1:3 ]; 
+
+    scale = (typeof(scale)<:Number) ? (scale,scale,scale) : scale
 
     for pidx in 1:numpoints
-        # Each iteration in this loop corresponds to a new particle
-        # A particle is nothing but a pair of coordinates
-        # Random coordinates of the particle inside VV, HH and DD
-        c1 = rand( subr[1].start == -1 ? (2:dims[1]-1) : subr[1] )
-        c2 = rand( subr[2].start == -1 ? (2:dims[2]-1) : subr[2] )
-        c3 = rand( subr[3].start == -1 ? (2:dims[3]-1) : subr[3] )
 
-        # Trajectory starts at the ( VV, HH ) position
-        TrajectoriesV[ 1, pidx ] = VV[ c1 ] + 0.0
-        TrajectoriesL[ 1, pidx ] = LL[ c2 ] + 0.0
-        TrajectoriesD[ 1, pidx ] = DD[ c3 ] + 0.0
+        # Placing a new particle inside the vector-field. This is done by 
+        # randomly picking a random position withing the vector-field. 
+        starting_pos = rand.( sampling_region ); 
 
-        # Translation converted into indices on VV and HH
-        Ut = facF * U[ c1, c2, c3, T0 ]
-        Vt = facF * V[ c1, c2, c3, T0 ]
-        Wt = facF * W[ c1, c2, c3, T0 ]
+        # Recording the starting position in the first timepoints in the trajectory tables for point $pidx. 
+        TrajectoriesY[ 1, pidx ] = Float32( starting_pos[1] )
+        TrajectoriesX[ 1, pidx ] = Float32( starting_pos[2] )
+        TrajectoriesZ[ 1, pidx ] = Float32( starting_pos[3] )
 
-        # Time-iteration
+        # Sampling the translation at the current ( starting ) position
+        dY = Float32( scale[1] * U[ starting_pos..., T0 ] )
+        dX = Float32( scale[2] * V[ starting_pos..., T0 ] )
+        dZ = Float32( scale[3] * W[ starting_pos..., T0 ] )
+
+        # moving forward in time, from T0 to T1
         for t in 2:numT
 
-            TrajectoriesV[t,pidx] = TrajectoriesV[t-1, pidx] + Ut
-            TrajectoriesL[t,pidx] = TrajectoriesL[t-1, pidx] + Vt
-            TrajectoriesD[t,pidx] = TrajectoriesD[t-1, pidx] + Wt
+            # New_pos = previous position + translation (dU,dV,dW); 
+            updated_pos = ( TrajectoriesY[t-1, pidx], TrajectoriesX[t-1, pidx], TrajectoriesZ[t-1, pidx] ) .+ ( dY, dX, dZ ); 
 
-            c1 = round( Int32, TrajectoriesV[t,pidx] / facV )
-            c2 = round( Int32, TrajectoriesL[t,pidx] / facL )
-            c3 = round( Int32, TrajectoriesD[t,pidx] / facD )
+            # Recording the updated position in the trajectory tables
+            TrajectoriesY[t,pidx] = updated_pos[1]
+            TrajectoriesX[t,pidx] = updated_pos[2]
+            TrajectoriesZ[t,pidx] = updated_pos[3]
 
-            # If new position is out of the coordinate space, stop
-            if c1 > dims[1] || c1 < 1 ||
-               c2 > dims[2] || c2 < 1 ||
-               c3 > dims[3] || c3 < 1
-                TrajectoriesV[ t:end, pidx ] .= TrajectoriesV[ t-1, pidx ]
-                TrajectoriesL[ t:end, pidx ] .= TrajectoriesL[ t-1, pidx ]
-                TrajectoriesD[ t:end, pidx ] .= TrajectoriesD[ t-1, pidx ]
+            # Obtaining the integer index of the updated position
+            int_updated_pos = round.( Int64, updated_pos ); 
+
+            # If the (integer) updated position is out of the coordinates of the vector field, stop
+            if any( int_updated_pos .< 1 ) || any( int_updated_pos .> dims ) 
+                TrajectoriesY[ t:end, pidx ] .= TrajectoriesY[ t-1, pidx ]
+                TrajectoriesX[ t:end, pidx ] .= TrajectoriesX[ t-1, pidx ]
+                TrajectoriesZ[ t:end, pidx ] .= TrajectoriesZ[ t-1, pidx ]
                 break
             end
 
-            # Using nextV and nextH to sample the translation from U and V
-            Ut = facF * U[ c1, c2, c3, T0+t-1 ]
-            Vt = facF * V[ c1, c2, c3, T0+t-1 ]
-            Wt = facF * W[ c1, c2, c3, T0+t-1 ]
+            # Sampling the translation at the (integer) updated position
+            dY = Float32( scale[1] * U[ int_updated_pos..., T0+t-1 ] )
+            dX = Float32( scale[2] * V[ int_updated_pos..., T0+t-1 ] )
+            dZ = Float32( scale[3] * W[ int_updated_pos..., T0+t-1 ] )
 
-        end # Time-iteration
+        end
 
     end
 
-    return TrajectoriesV, TrajectoriesL, TrajectoriesD
+    return TrajectoriesY, TrajectoriesX, TrajectoriesZ
 end
