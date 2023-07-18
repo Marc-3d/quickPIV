@@ -471,6 +471,7 @@ end
 
 function similaritySpeedAveraging3D( avg_radius::I, U::Array{T,3}, V::Array{T,3}, W::Array{T,3}; st=0.0 ) where {T<:AbstractFloat}
     return similaritySpeedAveraging3D( (1,1,1) .* avg_radius, U, V, W, st=st ); 
+end
 
 function similaritySpeedAveraging3D( avg_radius::III, U::Array{T,3}, V::Array{T,3}, W::Array{T,3}; st=0.0 ) where {T<:AbstractFloat}
     u_avg   = zeros( T, size(U) );
