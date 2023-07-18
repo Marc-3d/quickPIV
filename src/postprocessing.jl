@@ -469,11 +469,12 @@ function similarityAveraging3D( avg_radius::III, U::Array{T,3}, V::Array{T,3}, W
     return u_avg, v_avg, w_avg
 end
 
-function similaritySpeedAveraging3D( avg_radius::I, U::Array{T,3}, V::Array{T,3}, W::Array{T,3}; st=0.0 ) where {T<:AbstractFloat}
-    return similaritySpeedAveraging3D( (1,1,1) .* avg_radius, U, V, W, st=st ); 
+function similaritySpeedAveraging3D( avg_radius::I, U::Array{T,3}, V::Array{T,3}, W::Array{T,3}; st=0.0, nt=0.1 ) where {T<:AbstractFloat}
+    return similaritySpeedAveraging3D( (1,1,1) .* avg_radius, U, V, W, st=st, nt=nt ); 
 end
 
-function similaritySpeedAveraging3D( avg_radius::III, U::Array{T,3}, V::Array{T,3}, W::Array{T,3}; st=0.0 ) where {T<:AbstractFloat}
+function similaritySpeedAveraging3D( avg_radius::III, U::Array{T,3}, V::Array{T,3}, W::Array{T,3}; st=0.0, nt=0.1 ) where {T<:AbstractFloat}
+    
     u_avg   = zeros( T, size(U) );
     v_avg   = zeros( T, size(V) );
     w_avg   = zeros( T, size(W) );
@@ -493,6 +494,7 @@ function similaritySpeedAveraging3D( avg_radius::III, U::Array{T,3}, V::Array{T,
 
         r0, c0, z0 = max.(    1   , (row,col,zet) .- avg_radius )
         r1, c1, z1 = min.( (h,w,d), (row,col,zet) .+ avg_radius ); 
+        len = length(r0:r1)*length(c0:c1)*length(z0:z1)
 
         n = 0;
         for z in z0:z1, x in c0:c1, y in r0:r1
@@ -506,9 +508,9 @@ function similaritySpeedAveraging3D( avg_radius::III, U::Array{T,3}, V::Array{T,
                 n += 1;
             end
         end
-        u_avg[ row, col, zet ] = ( n == 0 ) ? 0 : mean_u/n;
-        v_avg[ row, col, zet ] = ( n == 0 ) ? 0 : mean_v/n;
-        w_avg[ row, col, zet ] = ( n == 0 ) ? 0 : mean_w/n;
+        u_avg[ row, col, zet ] = ( n/len < nt ) ? 0 : mean_u/n;
+        v_avg[ row, col, zet ] = ( n/len < nt ) ? 0 : mean_v/n;
+        w_avg[ row, col, zet ] = ( n/len < nt ) ? 0 : mean_w/n;
     end
 
     return u_avg, v_avg, w_avg
