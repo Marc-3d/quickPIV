@@ -723,20 +723,23 @@ end
 function PIVtrajectories_grid( U::Array{P,4}, V::Array{P,4}, W::Array{P,4}, T0, T1, numpoints; 
                                 subregion=( 1:-1, 1:-1, 1:-1 ), step=(1,1,1), scale=(1,1,1) ) where {P<:Real}
 
-    numT = T1 - T0;
-    TrajectoriesY = zeros( Float32, numT, numpoints )
-    TrajectoriesX = zeros( Float32, numT, numpoints )
-    TrajectoriesZ = zeros( Float32, numT, numpoints )
-
     # Length of the each axis of the vector field. 
     dims  = ( length( 1:size(U,1) ), length( 1:size(U,2) ), length( 1:size(U,3) ) );
 
     # The user can limit the simulation to a certain subregion of the vector field. 
-    sampling_region = [ length( subregion[i] ) == 0 ? (2:step[i]:dims[i]-1) : Base.StepRange( subregion[i].start, step[i], subregion[i].stop ) for i in 1:3 ]; 
-
+    sampling_region = [ length( subregion[i] ) == 0 ? (2:step[i]:dims[i]-1) : Base.StepRange( subregion[i].start, step[i], subregion[i].stop ) for i in 1:3 ];
     scale = (typeof(scale)<:Number) ? (scale,scale,scale) : scale
 
+    numT = T1 - T0;
+    TrajectoriesY = zeros( Float32, numT, prod( length.(sampling_region) ) )
+    TrajectoriesX = zeros( Float32, numT, prod( length.(sampling_region) ) )
+    TrajectoriesZ = zeros( Float32, numT, prod( length.(sampling_region) ) )
+
+
+    pidx = 0; 
     for z in sampling_region[3], x in sampling_region[2], y in sampling_region[1]
+
+        pidx += 1; 
 
         # Placing a new particle inside the vector-field. This is done by 
         # randomly picking a random position withing the vector-field. 
@@ -778,9 +781,7 @@ function PIVtrajectories_grid( U::Array{P,4}, V::Array{P,4}, W::Array{P,4}, T0, 
             dY = Float32( scale[1] * U[ int_updated_pos..., T0+t-1 ] )
             dX = Float32( scale[2] * V[ int_updated_pos..., T0+t-1 ] )
             dZ = Float32( scale[3] * W[ int_updated_pos..., T0+t-1 ] )
-
         end
-
     end
 
     return TrajectoriesY, TrajectoriesX, TrajectoriesZ
