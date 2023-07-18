@@ -653,8 +653,8 @@ end
 
 """ PIV Trajectories, work started by Michelle Gottlieb  """
 
-function PIVtrajectories( U::Array{P,4}, V::Array{P,4}, W::Array{P,4},
-                          T0, T1, numpoints; subregion=( 1:-1, 1:-1, 1:-1 ), scale=(1,1,1) ) where {P<:Real}
+function PIVtrajectories( U::Array{P,4}, V::Array{P,4}, W::Array{P,4}, T0, T1, numpoints; 
+                          subregion=( 1:-1, 1:-1, 1:-1 ), scale=(1,1,1) ) where {P<:Real}
 
     numT = T1 - T0;
     TrajectoriesY = zeros( Float32, numT, numpoints )
@@ -674,6 +674,73 @@ function PIVtrajectories( U::Array{P,4}, V::Array{P,4}, W::Array{P,4},
         # Placing a new particle inside the vector-field. This is done by 
         # randomly picking a random position withing the vector-field. 
         starting_pos = rand.( sampling_region ); 
+
+        # Recording the starting position in the first timepoints in the trajectory tables for point $pidx. 
+        TrajectoriesY[ 1, pidx ] = Float32( starting_pos[1] )
+        TrajectoriesX[ 1, pidx ] = Float32( starting_pos[2] )
+        TrajectoriesZ[ 1, pidx ] = Float32( starting_pos[3] )
+
+        # Sampling the translation at the current ( starting ) position
+        dY = Float32( scale[1] * U[ starting_pos..., T0 ] )
+        dX = Float32( scale[2] * V[ starting_pos..., T0 ] )
+        dZ = Float32( scale[3] * W[ starting_pos..., T0 ] )
+
+        # moving forward in time, from T0 to T1
+        for t in 2:numT
+
+            # New_pos = previous position + translation (dU,dV,dW); 
+            updated_pos = ( TrajectoriesY[t-1, pidx], TrajectoriesX[t-1, pidx], TrajectoriesZ[t-1, pidx] ) .+ ( dY, dX, dZ ); 
+
+            # Recording the updated position in the trajectory tables
+            TrajectoriesY[t,pidx] = updated_pos[1]
+            TrajectoriesX[t,pidx] = updated_pos[2]
+            TrajectoriesZ[t,pidx] = updated_pos[3]
+
+            # Obtaining the integer index of the updated position
+            int_updated_pos = round.( Int64, updated_pos ); 
+
+            # If the (integer) updated position is out of the coordinates of the vector field, stop
+            if any( int_updated_pos .< 1 ) || any( int_updated_pos .> dims ) 
+                TrajectoriesY[ t:end, pidx ] .= TrajectoriesY[ t-1, pidx ]
+                TrajectoriesX[ t:end, pidx ] .= TrajectoriesX[ t-1, pidx ]
+                TrajectoriesZ[ t:end, pidx ] .= TrajectoriesZ[ t-1, pidx ]
+                break
+            end
+
+            # Sampling the translation at the (integer) updated position
+            dY = Float32( scale[1] * U[ int_updated_pos..., T0+t-1 ] )
+            dX = Float32( scale[2] * V[ int_updated_pos..., T0+t-1 ] )
+            dZ = Float32( scale[3] * W[ int_updated_pos..., T0+t-1 ] )
+
+        end
+
+    end
+
+    return TrajectoriesY, TrajectoriesX, TrajectoriesZ
+end
+
+
+function PIVtrajectories_grid( U::Array{P,4}, V::Array{P,4}, W::Array{P,4}, T0, T1, numpoints; 
+                                subregion=( 1:-1, 1:-1, 1:-1 ), step=(1,1,1) ) where {P<:Real}
+
+    numT = T1 - T0;
+    TrajectoriesY = zeros( Float32, numT, numpoints )
+    TrajectoriesX = zeros( Float32, numT, numpoints )
+    TrajectoriesZ = zeros( Float32, numT, numpoints )
+
+    # Length of the each axis of the vector field. 
+    dims  = ( length( 1:size(U,1) ), length( 1:size(U,2) ), length( 1:size(U,3) ) );
+
+    # The user can limit the simulation to a certain subregion of the vector field. 
+    sampling_region = [ length( subregion[i] ) == 0 ? (2:step[i]:dims[i]-1) : Base.StepRange( subregion[i].start, step[i], subregion[i].stop ) for i in 1:3 ]; 
+
+    scale = (typeof(scale)<:Number) ? (scale,scale,scale) : scale
+
+    for z in sampling_region[3], x in sampling_region[2], y in sampling_region[1]
+
+        # Placing a new particle inside the vector-field. This is done by 
+        # randomly picking a random position withing the vector-field. 
+        starting_pos = (y,x,z); 
 
         # Recording the starting position in the first timepoints in the trajectory tables for point $pidx. 
         TrajectoriesY[ 1, pidx ] = Float32( starting_pos[1] )
