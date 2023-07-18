@@ -495,7 +495,7 @@ function similaritySpeedAveraging3D( avg_radius::III, U::Array{T,3}, V::Array{T,
         r1, c1, z1 = min.( (h,w,d), (row,col,zet) .+ avg_radius ); 
 
         n = 0;
-        for z in zmin:zmax, x in cmin:cmax, y in rmin:rmax
+        for z in z0:z1, x in c0:c1, y in r0:r1
             vec2  = ( U[y,x,z], V[y,x,z], W[y,x,z] )
             mag2  = sqrt( sum( vec2 .* vec2 ) ); 
             nvec2 = vec2 ./ mag2
