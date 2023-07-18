@@ -721,7 +721,7 @@ end
 
 
 function PIVtrajectories_grid( U::Array{P,4}, V::Array{P,4}, W::Array{P,4}, T0, T1, numpoints; 
-                                subregion=( 1:-1, 1:-1, 1:-1 ), step=(1,1,1) ) where {P<:Real}
+                                subregion=( 1:-1, 1:-1, 1:-1 ), step=(1,1,1), scale=(1,1,1) ) where {P<:Real}
 
     numT = T1 - T0;
     TrajectoriesY = zeros( Float32, numT, numpoints )
