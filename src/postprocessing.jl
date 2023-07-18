@@ -469,33 +469,34 @@ function similarityAveraging3D( avg_radius::III, U::Array{T,3}, V::Array{T,3}, W
     return u_avg, v_avg, w_avg
 end
 
-function similaritySpeedAveraging3D( avg_radius::I, U::Array{T,3}, V::Array{T,3}, W::Array{T,3};
-                                     st=0.0 ) where {T<:AbstractFloat}
+function similaritySpeedAveraging3D( avg_radius::I, U::Array{T,3}, V::Array{T,3}, W::Array{T,3}; st=0.0 ) where {T<:AbstractFloat}
+    return similaritySpeedAveraging3D( (1,1,1) .* avg_radius, U, V, W, st=st ); 
+
+function similaritySpeedAveraging3D( avg_radius::III, U::Array{T,3}, V::Array{T,3}, W::Array{T,3}; st=0.0 ) where {T<:AbstractFloat}
     u_avg   = zeros( T, size(U) );
     v_avg   = zeros( T, size(V) );
     w_avg   = zeros( T, size(W) );
     h, w, d = size( U )
 
     for zet in 1:d, col in 1:w, row in 1:h
-        zmin, zmax = max( 1, zet-avg_radius ), min( d, zet+avg_radius );
-        cmin, cmax = max( 1, col-avg_radius ), min( w, col+avg_radius );
-        rmin, rmax = max( 1, row-avg_radius ), min( h, row+avg_radius );
-        len = length(rmin:rmax)*length(cmin:cmax)*length(zmin:zmax);
-        # sampling each vector in the vector field
+
         vec = U[row,col,zet], V[row,col,zet], W[row,col,zet]
         mag = sqrt( sum( vec .* vec ) )
-        # normalizing the vector, if its magnitude is > 0
         ( mag == 0 ) && ( continue; )
         nvec = vec ./ mag; 
+
         # variables to hold the averaged vector component
         mean_u = 0.0;
         mean_v = 0.0;
         mean_w = 0.0;
-        # counter of similar neighbouring vectors
-        n  = 0;
+
+        r0, c0, z0 = max.(    1   , (row,col,zet) .- avg_radius )
+        r1, c1, z1 = min.( (h,w,d), (row,col,zet) .+ avg_radius ); 
+
+        n = 0;
         for z in zmin:zmax, x in cmin:cmax, y in rmin:rmax
-            vec2 = ( U[y,x,z], V[y,x,z], W[y,x,z] )
-            mag2 = sqrt( sum( vec2 .* vec2 ) ); 
+            vec2  = ( U[y,x,z], V[y,x,z], W[y,x,z] )
+            mag2  = sqrt( sum( vec2 .* vec2 ) ); 
             nvec2 = vec2 ./ mag2
             if sum( vec .* vec2 ) > st
                 mean_u += U[y,x,z]
@@ -504,9 +505,9 @@ function similaritySpeedAveraging3D( avg_radius::I, U::Array{T,3}, V::Array{T,3}
                 n += 1;
             end
         end
-        u_avg[ row, col, zet ] = mean_u/n;
-        v_avg[ row, col, zet ] = mean_v/n;
-        w_avg[ row, col, zet ] = mean_w/n;
+        u_avg[ row, col, zet ] = ( n == 0 ) ? 0 : mean_u/n;
+        v_avg[ row, col, zet ] = ( n == 0 ) ? 0 : mean_v/n;
+        w_avg[ row, col, zet ] = ( n == 0 ) ? 0 : mean_w/n;
     end
 
     return u_avg, v_avg, w_avg
