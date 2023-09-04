@@ -573,6 +573,52 @@ function similarityMap( avg_radius::I, U::Array{T,3}, V::Array{T,3}, W::Array{T,
     return similty
 end
 
+function similarityMap( avg_radius::I, U::Array{T,2}, V::Array{T,2}; st=0.0 ) where {T<:AbstractFloat}
+
+    similty = zeros( Float32, size(U) );
+    h, w = size( U )
+
+
+    for col in 1:w
+        cmin = max( 1, col-avg_radius );
+        cmax = min( w, col+avg_radius );
+
+        for row in 1:h
+
+            mag = sqrt( U[row,col]^2 + V[row,col]^2 + W[row,col]^2 )
+            if mag == 0
+                continue
+            end
+
+            nu1 = U[row,col]/mag
+            nv1 = V[row,col]/mag
+
+            rmin = max( 1, row-avg_radius );
+            rmax = min( h, row+avg_radius );
+
+            len  = length(rmin:rmax)*length(cmin:cmax);
+            len  = avg_radius*avg_radius;
+
+            n = 0;
+            for x in cmin:cmax
+                for y in rmin:rmax
+                    mag2 = sqrt( U[y,x]^2 + V[y,x]^2 )
+                    nu2  = U[y,x]/mag2
+                    nv2  = V[y,x]/mag2
+                    dot  = nu1*nu2 + nv1*nv2
+                    if dot > st
+                        n += 1;
+                    end
+                end
+            end
+
+            similty[row,col] = (n/len);
+        end
+    end
+
+    return similty
+end
+
 function velocityMap( U::Array{T,3}, V::Array{T,3}, W::Array{T,3} ) where {T<:AbstractFloat}
 
     mags = zeros( Float32, size( U ) )
