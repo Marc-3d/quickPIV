@@ -585,7 +585,7 @@ function similarityMap( avg_radius::I, U::Array{T,2}, V::Array{T,2}; st=0.0 ) wh
 
         for row in 1:h
 
-            mag = sqrt( U[row,col]^2 + V[row,col]^2 + W[row,col]^2 )
+            mag = sqrt( U[row,col]^2 + V[row,col]^2 )
             if mag == 0
                 continue
             end
